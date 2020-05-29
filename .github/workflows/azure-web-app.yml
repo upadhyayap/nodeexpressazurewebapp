@@ -55,6 +55,17 @@ jobs:
         npm install
         gulp unittest
         popd
+    # Run functional tests
+    - name: Run Functional tests
+      continue-on-error: false
+      run: |
+        pushd .
+        cd Tests
+        npm install
+        sudo apt install -f google-chrome-stable
+        wget -O chromedriver.zip https://chromedriver.storage.googleapis.com/83.0.4103.39/chromedriver_linux64.zip && unzip chromedriver.zip chromedriver
+        gulp functionaltest --webAppUrl https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/
+        popd
     - name: Upload a Build Artifact
       continue-on-error: false
       uses: actions/upload-artifact@v2
@@ -65,7 +76,7 @@ jobs:
         path: ${{ github.workspace }}
   Deploy:
     name: Deploy to azure web app
-    needs: build
+    needs: build1
     runs-on: ubuntu-latest
     steps:
     - name: Download a Build Artifact
