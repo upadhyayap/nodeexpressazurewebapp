@@ -31,7 +31,7 @@ env:
 jobs:
   build:
     name: Build and Run tests
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
     - name: Use Node.js ${{ env.NODE_VERSION }}
@@ -42,30 +42,24 @@ jobs:
       continue-on-error: false
       run: |
         # Build and test the project
-        pushd .
         cd Application
         npm install
         npm run build --if-present
-        popd
     - name: npm test
       continue-on-error: false
       run: |
-        pushd .
         cd Tests
         npm install
         gulp unittest
-        popd
     # Run functional tests
     - name: Run Functional tests
       continue-on-error: false
       run: |
-        pushd .
         cd Tests
         npm install
         sudo apt install -f google-chrome-stable
         wget -O chromedriver.zip https://chromedriver.storage.googleapis.com/83.0.4103.39/chromedriver_linux64.zip && unzip chromedriver.zip chromedriver
         gulp functionaltest --webAppUrl https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/
-        popd
     - name: Upload a Build Artifact
       continue-on-error: false
       uses: actions/upload-artifact@v2
