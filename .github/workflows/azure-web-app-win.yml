@@ -16,7 +16,7 @@ name: Build and Deploy node Express app to azure
 on:
   push:
     branches:
-      - release
+      - master
 
 env:
   AZURE_WEBAPP_NAME: nodeexpresswebapp    # set this to your application's name
@@ -31,7 +31,7 @@ env:
 jobs:
   build:
     name: Build and Run tests
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
     - name: Use Node.js ${{ env.NODE_VERSION }}
@@ -57,56 +57,8 @@ jobs:
       run: |
         cd Tests
         npm install
-        sudo apt install -f google-chrome-stable
-        wget -O chromedriver.zip https://chromedriver.storage.googleapis.com/83.0.4103.39/chromedriver_linux64.zip && unzip chromedriver.zip chromedriver
-        gulp functionaltest --webAppUrl https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/
-    - name: Upload a Build Artifact
-      continue-on-error: false
-      uses: actions/upload-artifact@v2
-      with:
-        # Artifact name
-        name: artifacts
-        # A file, directory or wildcard pattern that describes what to upload
-        path: ${{ github.workspace }}
-  Deploy:
-    name: Deploy to azure web app
-    needs: build
-    if: ${{ success() }}
-    runs-on: ubuntu-latest
-    steps:
-    - name: Download a Build Artifact
-      uses: actions/download-artifact@v2
-      continue-on-error: false
-      with:
-        # Artifact name
-        name: artifacts
-        # Destination path
-        path: ${{ github.workspace }}
-    # login to azure
-    - name: Login to Azure
-      uses: azure/login@v1
-      continue-on-error: false
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-    # Deploy Arm template
-    - name: Deploy ARM Template
-      uses: azure/CLI@v1
-      continue-on-error: false
-      with:
-        inlineScript: |
-          az group create --name ${{ env.RESOURCEGROUPNAME }} --location ${{ env.LOCATION }}
-          az deployment group create --resource-group ${{ env.RESOURCEGROUPNAME }} --template-file ./armTemplates/windows-webapp-template.json --parameters webAppName='${{ env.AZURE_WEBAPP_NAME }}' hostingPlanName='${{ env.HOSTINGPLANNAME }}' appInsightsLocation='${{ env.APPINSIGHTLOCATION }}' sku='${{env.SKU}}'
-    - name: 'Deploy to Azure WebApp'
-      uses: azure/webapps-deploy@v2
-      with: 
-        app-name: ${{ env.AZURE_WEBAPP_NAME }}
-        package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
-    # Run functional tests
-    - name: Run Functional tests
-      continue-on-error: false
-      run: |
-        pushd .
-        cd Tests
-        npm install
-        gulp functionaltest --webAppUrl https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/
-        popd    
+        $Path = $env:TEMP; $Installer = "chrome_installer.exe"; Invoke-WebRequest "https://dl.google.com/chrome/install/latest/chrome_installer.exe" -OutFile $Path$Installer; Start-Process -FilePath $Path$Installer -Args "/silent /install" -Verb RunAs -Wait; Remove-Item $Path$Installer
+        Invoke-WebRequest https://chromedriver.storage.googleapis.com/83.0.4103.39/chromedriver_win32.zip -outFile chromedriver.zip
+        Expand-Archive -Path chromedriver.zip
+        Remove-Item chromedriver.zip
+        gulp functionaltest --webAppUrl https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/  
