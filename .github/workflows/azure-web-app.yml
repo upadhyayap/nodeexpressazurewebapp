@@ -42,7 +42,7 @@ jobs:
       continue-on-error: false
       run: |
         # Build and test the project
-        pushhd .
+        pushd .
         cd Application
         npm install
         npm run build --if-present
@@ -50,7 +50,7 @@ jobs:
     - name: npm test
       continue-on-error: false
       run: |
-        pushhd .
+        pushd .
         cd Tests
         npm install
         gulp unittest
@@ -99,7 +99,7 @@ jobs:
     - name: Run Functional tests
       continue-on-error: false
       run: |
-        pushhd .
+        pushd .
         cd Tests
         npm install
         gulp functionaltest --webAppUrl https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/
