@@ -26,7 +26,7 @@ env:
   LOCATION: 'centralus'
   HOSTINGPLANNAME: 'ConsumptionPlan'
   APPINSIGHTLOCATION: 'centralus'
-  SKU: 'Standard S1'
+  SKU: 'S1 Standard'
 
 jobs:
   build:
