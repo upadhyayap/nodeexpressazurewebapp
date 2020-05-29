@@ -77,7 +77,7 @@ jobs:
   Deploy:
     name: Deploy to azure web app
     needs: build
-    if: succedd()
+    if: ${{ success() }}
     runs-on: ubuntu-latest
     steps:
     - name: Download a Build Artifact
