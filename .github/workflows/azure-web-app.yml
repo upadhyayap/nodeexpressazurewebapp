@@ -76,7 +76,8 @@ jobs:
         path: ${{ github.workspace }}
   Deploy:
     name: Deploy to azure web app
-    needs: build1
+    needs: build
+    if: succedd()
     runs-on: ubuntu-latest
     steps:
     - name: Download a Build Artifact
