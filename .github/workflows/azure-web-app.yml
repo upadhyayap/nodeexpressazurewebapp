@@ -19,10 +19,10 @@ on:
       - master
 
 env:
-  AZURE_WEBAPP_NAME: nodeexpressazurewebapp    # set this to your application's name
+  AZURE_WEBAPP_NAME: nodeexpresswebapp    # set this to your application's name
   AZURE_WEBAPP_PACKAGE_PATH: 'Application'      # set this to the path to your web app project, defaults to the repository root
   NODE_VERSION: '8.11.1'                # set this to the node version to use
-  RESOURCEGROUPNAME: 'nodeexpressazurewebapprg'
+  RESOURCEGROUPNAME: 'nodeexpresswebapp-rg'
   LOCATION: 'centralus'
   HOSTINGPLANNAME: 'ConsumptionPlan'
   APPINSIGHTLOCATION: 'centralus'
@@ -76,14 +76,6 @@ jobs:
         name: artifacts
         # Destination path
         path: ${{ github.workspace }}
-    - name: npm test
-      continue-on-error: false
-      run: |
-        pushhd .
-        cd Tests
-        npm install
-        gulp functionaltest --webAppUrl https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/
-        popd    
     # login to azure
     - name: Login to Azure
       uses: azure/login@v1
@@ -102,4 +94,13 @@ jobs:
       uses: azure/webapps-deploy@v2
       with: 
         app-name: ${{ env.AZURE_WEBAPP_NAME }}
-        package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}  
+        package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+    # Run functional tests
+    - name: Run Functional tests
+      continue-on-error: false
+      run: |
+        pushhd .
+        cd Tests
+        npm install
+        gulp functionaltest --webAppUrl https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/
+        popd    
