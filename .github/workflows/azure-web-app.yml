@@ -33,6 +33,12 @@ jobs:
     name: Build and Run tests
     runs-on: ubuntu-latest
     steps:
+     # login to azure
+    - name: Login to Azure
+      uses: azure/login@v1
+      continue-on-error: false
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
     - uses: actions/checkout@v2
     - name: Use Node.js ${{ env.NODE_VERSION }}
       uses: actions/setup-node@v1
