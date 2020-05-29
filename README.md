@@ -1,5 +1,5 @@
 ![Build and Deploy node Express app to azure](https://github.com/upadhyayap/nodeexpressazurewebapp/workflows/Build%20and%20Deploy%20node%20Express%20app%20to%20azure/badge.svg)
-# Node web app devops starter
+# Node web app devops starter 
 
 This repo will contain sample code and workflow for node js apps deployed on azure as a web app
 
