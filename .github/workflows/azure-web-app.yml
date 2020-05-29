@@ -92,6 +92,7 @@ jobs:
   FunctionalTests:
     name: Run Functional tests
     runs-on: windows-latest
+    needs: Deploy
     steps:
     # Download artifact
     - name: Download a Build Artifact
