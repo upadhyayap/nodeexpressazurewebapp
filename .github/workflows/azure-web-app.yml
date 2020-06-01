@@ -95,19 +95,22 @@ jobs:
     needs: Deploy
     steps:
     # Download artifact
-    - name: Download a Build Artifact
-      uses: actions/download-artifact@v2
-      continue-on-error: false
+    - uses: actions/checkout@v2
+    - name: Use Node.js ${{ env.NODE_VERSION }}
+      uses: actions/setup-node@v1
       with:
-        name: artifacts
-        path: ${{ github.workspace }}
+        node-version: ${{ env.NODE_VERSION }}
+    - name: npm install and build
+      continue-on-error: false
+      run: |
+        # Build and test the project
+        cd Application
+        npm install
     # Run functional tests
     - name: Run Functional tests
       continue-on-error: false
       run: |
-        cd Application
-        npm install
-        cd ../Tests
+        cd Tests
         npm install
         $Path = $env:TEMP; $Installer = "chrome_installer.exe"; Invoke-WebRequest "https://dl.google.com/chrome/install/latest/chrome_installer.exe" -OutFile $Path$Installer; Start-Process -FilePath $Path$Installer -Args "/silent /install" -Verb RunAs -Wait; Remove-Item $Path$Installer
         Invoke-WebRequest https://chromedriver.storage.googleapis.com/83.0.4103.39/chromedriver_win32.zip -outFile chromedriver.zip

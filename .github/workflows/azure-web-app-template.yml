@@ -19,19 +19,19 @@ on:
       - release
 
 env:
-  AZURE_WEBAPP_NAME: nodeexpresswebapp    # set this to your application's name
-  AZURE_WEBAPP_PACKAGE_PATH: 'Application'      # set this to the path to your web app project, defaults to the repository root
+  AZURE_WEBAPP_NAME: ${{AZURE_WEBAPP_NAME}}    # set this to your application's name
+  AZURE_WEBAPP_PACKAGE_PATH: ${{AZURE_WEBAPP_PACKAGE_PATH}}      # set this to the path to your web app project, defaults to the repository root
   NODE_VERSION: '8.11.1'                # set this to the node version to use
-  RESOURCEGROUPNAME: 'nodeexpresswebapp-rg'
-  LOCATION: 'centralus'
-  HOSTINGPLANNAME: 'ConsumptionPlan'
-  APPINSIGHTLOCATION: 'centralus'
-  SKU: 'S1 Standard'
+  RESOURCEGROUPNAME: ${{RESOURCEGROUPNAME}}
+  LOCATION: ${{LOCATION}}
+  HOSTINGPLANNAME: ${{HOSTINGPLANNAME}}
+  APPINSIGHTLOCATION: ${{APPINSIGHTLOCATION}}
+  SKU: ${{SKU}}
 
 jobs:
   build:
     name: Build and Run tests
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - name: Use Node.js ${{ env.NODE_VERSION }}
@@ -51,14 +51,66 @@ jobs:
         cd Tests
         npm install
         gulp unittest
+    - name: Upload a Build Artifact
+      continue-on-error: false
+      uses: actions/upload-artifact@v2
+      with:
+        name: artifacts
+        path: ${{ github.workspace }}
+  Deploy:
+    name: Deploy to azure web app
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    # Download artifact
+    - name: Download a Build Artifact
+      uses: actions/download-artifact@v2
+      continue-on-error: false
+      with:
+        name: artifacts
+        path: ${{ github.workspace }}
+    # login to azure
+    - name: Login to Azure
+      uses: azure/login@v1
+      continue-on-error: false
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    # Deploy Arm template
+    - name: Deploy ARM Template
+      uses: azure/CLI@v1
+      continue-on-error: false
+      with:
+        inlineScript: |
+          az group create --name ${{ env.RESOURCEGROUPNAME }} --location ${{ env.LOCATION }}
+          az deployment group create --resource-group ${{ env.RESOURCEGROUPNAME }} --template-file ./armTemplates/windows-webapp-template.json --parameters webAppName='${{ env.AZURE_WEBAPP_NAME }}' hostingPlanName='${{ env.HOSTINGPLANNAME }}' appInsightsLocation='${{ env.APPINSIGHTLOCATION }}' sku='${{env.SKU}}'
+    # Deploy web app
+    - name: 'Deploy to Azure WebApp'
+      uses: azure/webapps-deploy@v2
+      with: 
+        app-name: ${{ env.AZURE_WEBAPP_NAME }}
+        package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+  FunctionalTests:
+    name: Run Functional tests
+    runs-on: windows-latest
+    needs: Deploy
+    steps:
+    # Download artifact
+    - name: Download a Build Artifact
+      uses: actions/download-artifact@v2
+      continue-on-error: false
+      with:
+        name: artifacts
+        path: ${{ github.workspace }}
     # Run functional tests
     - name: Run Functional tests
       continue-on-error: false
       run: |
-        cd Tests
+        cd Application
+        npm install
+        cd ../Tests
         npm install
         $Path = $env:TEMP; $Installer = "chrome_installer.exe"; Invoke-WebRequest "https://dl.google.com/chrome/install/latest/chrome_installer.exe" -OutFile $Path$Installer; Start-Process -FilePath $Path$Installer -Args "/silent /install" -Verb RunAs -Wait; Remove-Item $Path$Installer
         Invoke-WebRequest https://chromedriver.storage.googleapis.com/83.0.4103.39/chromedriver_win32.zip -outFile chromedriver.zip
         Expand-Archive -Path chromedriver.zip
         Remove-Item chromedriver.zip
-        gulp functionaltest --webAppUrl https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/  
+        gulp functionaltest --webAppUrl https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/
